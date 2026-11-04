@@ -20,10 +20,11 @@ function App() {
   const [showAll, setShowAll] = useState(false)
 
   useEffect(() => {
-    if (!supabase) return
+    const client = supabase
+    if (!client) return
     let cancelled = false
     const loadCatalog = async () => {
-      const { data, error } = await supabase.from('products')
+      const { data, error } = await client.from('products')
         .select('id,name,short_description,status,is_featured,categories(name),product_packages(name,duration_days,price_idr,is_active,sort_order)')
         .eq('status', 'published').order('sort_order')
       if (cancelled || error) return
