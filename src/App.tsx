@@ -5,7 +5,7 @@ import { products, formatIDR, type Product } from './data/products'
 import { isBackendConfigured } from './lib/supabase'
 
 const categories = ['All products', 'Entertainment', 'AI & Productivity', 'Design & Creative', 'Video & Editing']
-const ease = [0.22, 1, 0.36, 1]
+const ease = [0.22, 1, 0.36, 1] as [number, number, number, number]
 
 function App() {
   const [activeCategory, setActiveCategory] = useState('All products')
