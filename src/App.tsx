@@ -5,12 +5,13 @@ import { products, formatIDR, type Product } from './data/products'
 import { isBackendConfigured } from './lib/supabase'
 
 const categories = ['All products', 'Entertainment', 'AI & Productivity', 'Design & Creative', 'Video & Editing']
-const ease = [0.22, 1, 0.36, 1] as const
+const ease = [0.22, 1, 0.36, 1]
 
 function App() {
   const [activeCategory, setActiveCategory] = useState('All products')
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Product | null>(null)
+  const [checkoutProduct, setCheckoutProduct] = useState<Product | null>(null)
   const [checkout, setCheckout] = useState(false)
   const [payment, setPayment] = useState('qris')
   const [menuOpen, setMenuOpen] = useState(false)
@@ -21,7 +22,7 @@ function App() {
     (p.name.toLowerCase().includes(search.toLowerCase()) || p.category.toLowerCase().includes(search.toLowerCase()))
   ), [activeCategory, search])
 
-  const startCheckout = (product: Product) => { setSelected(product); setCheckout(true) }
+  const startCheckout = (product: Product) => { setCheckoutProduct(product); setSelected(null); setCheckout(true) }
 
   return <div className="site-shell">
     <div className="preview-strip"><span className="status-dot" /> {isBackendConfigured ? 'CONNECTED PREVIEW' : 'DESIGN PREVIEW'} <span className="strip-separator">/</span> ACO.DIGITAL <span className="strip-right">A considered digital store</span></div>
@@ -76,14 +77,14 @@ function App() {
 
     <footer className="footer"><div className="footer-main"><a className="brand" href="#"><span className="brand-mark">a.</span><span>aco<span className="brand-dot">.</span>digital</span></a><p>Everything digital.<br/>One destination.</p><div className="footer-links"><a href="#catalog">Products</a><a href="#how-it-works">How it works</a><a href="#help">Support</a><a href="mailto:hello@aco.digital">Contact</a></div></div><div className="footer-bottom"><span>© 2026 ACO.DIGITAL</span><span>MADE FOR YOUR DIGITAL EVERYDAY</span><span>TERMS · PRIVACY</span></div></footer>
 
-    <AnimatePresence>{selected && <ProductDialog product={selected} onClose={()=>setSelected(null)} onBuy={()=>{setCheckout(true);setSelected(null)}}/>}</AnimatePresence>
-    <AnimatePresence>{checkout && <CheckoutDialog product={selected} payment={payment} setPayment={setPayment} onClose={()=>setCheckout(false)}/>}</AnimatePresence>
+    <AnimatePresence>{selected && <ProductDialog product={selected} onClose={()=>setSelected(null)} onBuy={()=>startCheckout(selected)}/>}</AnimatePresence>
+    <AnimatePresence>{checkout && <CheckoutDialog product={checkoutProduct} payment={payment} setPayment={setPayment} onClose={()=>setCheckout(false)}/>}</AnimatePresence>
   </div>
 }
 
 function ProductCard({product,index,onSelect,onBuy}:{product:Product;index:number;onSelect:()=>void;onBuy:()=>void}) {
   return <motion.article className={'product-card '+(index===0?'product-card-featured':'')} initial={{opacity:0,y:22}} whileInView={{opacity:1,y:0}} viewport={{once:true,amount:.12}} transition={{duration:.55,delay:(index%3)*.06,ease}}>
-    <button className="card-open" onClick={onSelect} aria-label={'View '+product.name}><div className="card-topline"><span>{product.category.toUpperCase()}</span>{product.tag && <span className="product-tag">{product.tag}</span>}</div><div className="product-art" style={{'--product-accent':product.accent} as React.CSSProperties}><div className="product-orbit"/><div className="product-symbol">{product.symbol}</div><span className="art-code">ACO / DIGITAL GOODS</span></div><div className="product-info"><div><h3>{product.name}</h3><p>{product.description}</p></div><ArrowUpRight size={17}/></div></button>
+    <button className="card-open" onClick={onSelect} aria-label={'View '+product.name}><div className="card-topline"><span>{product.category.toUpperCase()}</span>{product.tag && <span className="product-tag">{product.tag}</span>}</div><div className="product-art" style={{'--product-accent':product.accent} as any}><div className="product-orbit"/><div className="product-symbol">{product.symbol}</div><span className="art-code">ACO / DIGITAL GOODS</span></div><div className="product-info"><div><h3>{product.name}</h3><p>{product.description}</p></div><ArrowUpRight size={17}/></div></button>
     <div className="card-bottom"><div><span>STARTING FROM</span><strong>{formatIDR(product.price)}</strong><small>{product.duration}</small></div><button className="add-button" onClick={onBuy}>Choose <ArrowRight size={14}/></button></div>
   </motion.article>
 }
