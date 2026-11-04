@@ -8,7 +8,9 @@ const categories = ['All products', 'Entertainment', 'AI & Productivity', 'Desig
 const ease = [0.22, 1, 0.36, 1] as [number, number, number, number]
 
 function App() {
-  const [catalog, setCatalog] = useState<Product[]>(products)\n  const [catalogIsSample, setCatalogIsSample] = useState(true)\n  const [activeCategory, setActiveCategory] = useState('All products')
+  const [catalog, setCatalog] = useState<Product[]>(products)
+  const [catalogIsSample, setCatalogIsSample] = useState(true)
+  const [activeCategory, setActiveCategory] = useState('All products')
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Product | null>(null)
   const [checkoutProduct, setCheckoutProduct] = useState<Product | null>(null)
@@ -17,7 +19,29 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [showAll, setShowAll] = useState(false)
 
-  useEffect(() => {\n    if (!supabase) return\n    let cancelled = false\n    const loadCatalog = async () => {\n      const { data, error } = await supabase.from('products')\n        .select('id,name,short_description,status,is_featured,categories(name),product_packages(name,duration_days,price_idr,is_active,sort_order)')\n        .eq('status', 'published').order('sort_order')\n      if (cancelled || error) return\n      const rows = (data ?? []) as any[]\n      const palette = ['#c9bda9','#a8b6ae','#c98e83','#b7b9c0']\n      const liveProducts: Product[] = rows.map((row, index) => {\n        const packages = (row.product_packages ?? []).filter((item: any) => item.is_active).sort((a: any,b: any) => a.price_idr - b.price_idr)\n        const category = Array.isArray(row.categories) ? row.categories[0]?.name : row.categories?.name\n        return { id: row.id, name: row.name, category: category || 'Digital products', description: row.short_description || 'Explore package details and terms.', price: Number(packages[0]?.price_idr ?? 0), duration: packages[0]?.duration_days ? packages[0].duration_days + ' hari' : 'Pilih paket', tag: row.is_featured ? 'Featured' : undefined, accent: palette[index % palette.length], symbol: row.name.split(/\\s+/).map((part: string) => part[0]).join('').slice(0,2), featured: row.is_featured }\n      }).filter(item => item.price > 0)\n      setCatalog(liveProducts)\n      setCatalogIsSample(false)\n    }\n    void loadCatalog()\n    return () => { cancelled = true }\n  }, [])\n\n  const visibleProducts = useMemo(() => catalog.filter(p =>
+  useEffect(() => {
+    if (!supabase) return
+    let cancelled = false
+    const loadCatalog = async () => {
+      const { data, error } = await supabase.from('products')
+        .select('id,name,short_description,status,is_featured,categories(name),product_packages(name,duration_days,price_idr,is_active,sort_order)')
+        .eq('status', 'published').order('sort_order')
+      if (cancelled || error) return
+      const rows = (data ?? []) as any[]
+      const palette = ['#c9bda9','#a8b6ae','#c98e83','#b7b9c0']
+      const liveProducts: Product[] = rows.map((row, index) => {
+        const packages = (row.product_packages ?? []).filter((item: any) => item.is_active).sort((a: any,b: any) => a.price_idr - b.price_idr)
+        const category = Array.isArray(row.categories) ? row.categories[0]?.name : row.categories?.name
+        return { id: row.id, name: row.name, category: category || 'Digital products', description: row.short_description || 'Explore package details and terms.', price: Number(packages[0]?.price_idr ?? 0), duration: packages[0]?.duration_days ? packages[0].duration_days + ' hari' : 'Pilih paket', tag: row.is_featured ? 'Featured' : undefined, accent: palette[index % palette.length], symbol: row.name.split(/\s+/).map((part: string) => part[0]).join('').slice(0,2), featured: row.is_featured }
+      }).filter(item => item.price > 0)
+      setCatalog(liveProducts)
+      setCatalogIsSample(false)
+    }
+    void loadCatalog()
+    return () => { cancelled = true }
+  }, [])
+
+  const visibleProducts = useMemo(() => catalog.filter(p =>
     (activeCategory === 'All products' || p.category === activeCategory) &&
     (p.name.toLowerCase().includes(search.toLowerCase()) || p.category.toLowerCase().includes(search.toLowerCase()))
   ), [activeCategory, search])
