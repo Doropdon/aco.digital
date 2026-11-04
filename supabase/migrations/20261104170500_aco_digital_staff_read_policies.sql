@@ -1,0 +1,4 @@
+create policy "Staff read order items" on public.order_items for select to authenticated using((auth.jwt()->'app_metadata'->>'role') in ('super_admin','order_admin','finance_admin'));
+create policy "Staff read order status history" on public.order_status_history for select to authenticated using((auth.jwt()->'app_metadata'->>'role') in ('super_admin','order_admin','finance_admin'));
+create policy "Staff read wallets" on public.wallets for select to authenticated using((auth.jwt()->'app_metadata'->>'role') in ('super_admin','finance_admin'));
+create policy "Staff read wallet transactions" on public.wallet_transactions for select to authenticated using((auth.jwt()->'app_metadata'->>'role') in ('super_admin','finance_admin'));
