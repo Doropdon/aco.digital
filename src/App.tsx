@@ -46,7 +46,7 @@ function App() {
   const visibleProduk = useMemo(() => catalog.filter(p =>
     (activeCategory === 'Semua produk' || translateCategory(p.category) === activeCategory) &&
     (p.name.toLowerCase().includes(search.toLowerCase()) || p.category.toLowerCase().includes(search.toLowerCase()))
-  ), [activeCategory, search])
+  ), [catalog, activeCategory, search])
 
   const startCheckout = (product: Product) => { setCheckoutProduct(product); setSelected(null); setCheckout(true) }
 
