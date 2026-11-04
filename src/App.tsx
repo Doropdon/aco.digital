@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'motion/react'
 import { ArrowDownRight, ArrowRight, ArrowUpRight, Check, ChevronDown, ChevronRight, CircleHelp, Clock3, Command, CreditCard, Filter, Headphones, Menu, Search, ShieldCheck, ShoppingBag, Sparkles, Wallet, X } from 'lucide-react'
 import { products, formatIDR, type Product } from './data/products'
 import { isBackendConfigured } from './lib/supabase'
