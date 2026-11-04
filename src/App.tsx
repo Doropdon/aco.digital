@@ -19,6 +19,15 @@ function App() {
   const [payment, setPayment] = useState('qris')
   const [menuOpen, setMenuOpen] = useState(false)
   const [showAll, setShowAll] = useState(false)
+  const [session, setSession] = useState<any>(null)
+  const [accountOpen, setAccountOpen] = useState(false)
+
+  useEffect(() => {
+    if (!supabase) return
+    void supabase.auth.getSession().then(({ data }) => setSession(data.session))
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession))
+    return () => listener.subscription.unsubscribe()
+  }, [])
 
   useEffect(() => {
     const client = supabase
@@ -50,6 +59,10 @@ function App() {
 
   const startCheckout = (product: Product) => { setCheckoutProduct(product); setSelected(null); setCheckout(true) }
 
+  if (session?.user?.app_metadata?.role === 'super_admin') {
+    return <OwnerDashboard email={session.user.email || ''} onSignOut={async () => { await supabase?.auth.signOut(); setSession(null) }} />
+  }
+
   return <div className="site-shell">
     <div className="preview-strip"><span className="status-dot" /> {isBackendConfigured && !catalogIsSample ? 'PRATINJAU KATALOG' : 'PRATINJAU DESAIN · KATALOG CONTOH'} <span className="strip-separator">/</span> ACO.DIGITAL <span className="strip-right">Toko digital pilihan</span></div>
     <header className="topbar">
@@ -60,7 +73,7 @@ function App() {
         <a href="#how-it-works" onClick={() => setMenuOpen(false)}>Cara kerja</a>
         <a href="#help" onClick={() => setMenuOpen(false)}>Bantuan</a>
       </nav>
-      <div className="nav-actions"><button className="icon-button search-trigger" aria-label="Fokus ke pencarian" onClick={() => document.getElementById('catalog-search')?.focus()}><Search size={18}/></button><button className="text-button" onClick={() => setCheckout(true)}>Akun saya <ArrowUpRight size={14}/></button><button className="mobile-menu icon-button" onClick={() => setMenuOpen(v => !v)} aria-label="Buka atau tutup menu">{menuOpen ? <X/> : <Menu/>}</button></div>
+      <div className="nav-actions"><button className="icon-button search-trigger" aria-label="Fokus ke pencarian" onClick={() => document.getElementById('catalog-search')?.focus()}><Search size={18}/></button><button className="text-button" onClick={() => setAccountOpen(true)}>Akun saya <ArrowUpRight size={14}/></button><button className="mobile-menu icon-button" onClick={() => setMenuOpen(v => !v)} aria-label="Buka atau tutup menu">{menuOpen ? <X/> : <Menu/>}</button></div>
     </header>
 
     <main>
@@ -103,7 +116,7 @@ function App() {
 
     <footer className="footer"><div className="footer-main"><a className="brand" href="#"><span className="brand-mark">a.</span><span>aco<span className="brand-dot">.</span>digital</span></a><p>Semua kebutuhan digital.<br/>Dalam satu tempat.</p><div className="footer-links"><a href="#catalog">Produk</a><a href="#how-it-works">Cara kerja</a><a href="#help">Bantuan</a><a href="mailto:hello@aco.digital">Kontak</a></div></div><div className="footer-bottom"><span>© 2026 ACO.DIGITAL</span><span>UNTUK KEBUTUHAN DIGITAL HARIANMU</span><span>KETENTUAN · PRIVASI</span></div></footer>
 
-    <AnimatePresence>{selected && <ProductDialog product={selected} onClose={()=>setSelected(null)} onBuy={()=>startCheckout(selected)}/>}</AnimatePresence>
+    <AnimatePresence>{accountOpen && <LoginDialog onClose={()=>setAccountOpen(false)}/>}</AnimatePresence>\n    <AnimatePresence>{selected && <ProductDialog product={selected} onClose={()=>setSelected(null)} onBuy={()=>startCheckout(selected)}/>}</AnimatePresence>
     <AnimatePresence>{checkout && <CheckoutDialog product={checkoutProduct} payment={payment} setPayment={setPayment} onClose={()=>setCheckout(false)}/>}</AnimatePresence>
   </div>
 }
