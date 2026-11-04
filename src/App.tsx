@@ -72,6 +72,7 @@ function App() {
         <a href="#collections" onClick={() => setMenuOpen(false)}>Koleksi</a>
         <a href="#how-it-works" onClick={() => setMenuOpen(false)}>Cara kerja</a>
         <a href="#help" onClick={() => setMenuOpen(false)}>Bantuan</a>
+        <button className="mobile-account-link" onClick={() => { setMenuOpen(false); setAccountOpen(true) }}>Masuk / Akun saya <ArrowUpRight size={15}/></button>
       </nav>
       <div className="nav-actions"><button className="icon-button search-trigger" aria-label="Fokus ke pencarian" onClick={() => document.getElementById('catalog-search')?.focus()}><Search size={18}/></button><button className="text-button" onClick={() => setAccountOpen(true)}>Akun saya <ArrowUpRight size={14}/></button><button className="mobile-menu icon-button" onClick={() => setMenuOpen(v => !v)} aria-label="Buka atau tutup menu">{menuOpen ? <X/> : <Menu/>}</button></div>
     </header>
