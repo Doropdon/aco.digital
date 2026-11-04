@@ -142,4 +142,82 @@ function CheckoutDialog({product,payment,setPayment,onClose}:{product:Product|nu
   return <motion.div className="overlay" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} onMouseDown={e=>{if(e.target===e.currentTarget)onClose()}}><motion.div className="dialog checkout-dialog" initial={{y:28,opacity:0}} animate={{y:0,opacity:1}} exit={{y:18,opacity:0}} transition={{duration:.3,ease}}><div className="checkout-heading"><div><div className="eyebrow"><span className="eyebrow-line"/> PEMBAYARAN AMAN</div><h2>Sedikit lagi, <em>jadi milikmu.</em></h2></div><button className="dialog-close" onClick={onClose}><X/></button></div><div className="checkout-layout"><div className="checkout-fields"><section className="checkout-block"><div className="block-heading"><span>01</span><h3>Data diri</h3></div><div className="account-switch"><button className={guest?'active':''} onClick={()=>setGuest(true)}>Lanjut sebagai tamu</button><button className={!guest?'active':''} onClick={()=>setGuest(false)}>Masuk</button></div>{guest ? <div className="field-stack"><label>Nama lengkap<input value={name} onChange={e=>setName(e.target.value)} placeholder="Nama kamu"/></label><label>Nomor WhatsApp<input value={whatsapp} onChange={e=>setWhatsapp(e.target.value)} placeholder="+62 8xx xxxx xxxx"/></label><label>Alamat surel<input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="nama@contoh.com"/></label></div> : <div className="signin-placeholder">Fitur masuk akun akan tersedia setelah pengaturan autentikasi selesai.</div>}</section><section className="checkout-block"><div className="block-heading"><span>02</span><h3>Metode pembayaran</h3></div><div className="payment-options"><button className={payment==='qris'?'payment-option active':'payment-option'} onClick={()=>setPayment('qris')}><span className="payment-icon"><Command/></span><span><strong>QRIS</strong><small>Pindai untuk membayar</small></span>{payment==='qris'&&<Check className="selected-check"/>}</button><button className={payment==='ewallet'?'payment-option active':'payment-option'} onClick={()=>setPayment('ewallet')}><span className="payment-icon"><Wallet/></span><span><strong>Dompet digital</strong><small>Transfer secara manual</small></span>{payment==='ewallet'&&<Check className="selected-check"/>}</button><button className={payment==='wallet'?'payment-option active':'payment-option'} onClick={()=>setPayment('wallet')}><span className="payment-icon"><CreditCard/></span><span><strong>Saldo Aco</strong><small>Perlu masuk akun</small></span>{payment==='wallet'&&<Check className="selected-check"/>}</button></div></section><section className="checkout-block"><div className="block-heading"><span>03</span><h3>Kode voucher</h3></div><div className="voucher-field"><input value={voucher} onChange={e=>setVoucher(e.target.value)} placeholder="Masukkan kode"/><button onClick={()=>setNotice('Pemeriksaan voucher akan terhubung ke layanan pembayaran saat fitur diaktifkan.')}>Gunakan</button></div></section></div><aside className="order-summary"><div className="block-heading"><span>04</span><h3>Ringkasan pesanan</h3></div><div className="summary-item"><div className="summary-symbol">{product?.symbol || 'a.'}</div><div><strong>{product?.name || 'Pilih produk'}</strong><small>{product ? 'Paket 30 hari · ilustrasi' : 'Belum ada produk dipilih'}</small></div></div><div className="summary-lines"><div><span>Subtotal</span><strong>{product?formatIDR(product.price):'—'}</strong></div><div><span>Diskon</span><strong>—</strong></div><div className="summary-total"><span>Total</span><strong>{product?formatIDR(product.price):'—'}</strong></div></div><button className="button button-light full-button" onClick={()=>setNotice('Pratinjau ini belum menerima pembayaran. Pembuatan pesanan akan diaktifkan setelah verifikasi pembayaran di sisi server dan pengujian keamanan selesai.')}>Lanjutkan pembayaran <ArrowRight size={16}/></button><p className="summary-security"><ShieldCheck size={15}/> Informasi kamu ditangani dengan aman.</p></aside></div>{notice && <div className="inline-notice">{notice}</div>}<p className="checkout-footnote">Hanya pratinjau. Tidak ada pembayaran yang diproses atau pesanan yang dibuat dari halaman ini.</p></motion.div></motion.div>
 }
 
+
+function LoginDialog({onClose}:{onClose:()=>void}) {
+  const [email,setEmail] = useState('')
+  const [password,setPassword] = useState('')
+  const [error,setError] = useState('')
+  const [loading,setLoading] = useState(false)
+  const [sent,setSent] = useState(false)
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!supabase) { setError('Layanan akun belum dikonfigurasi.'); return }
+    setLoading(true); setError('')
+    const { error } = await supabase.auth.signInWithPassword({email,password})
+    setLoading(false)
+    if (error) setError('Email atau kata sandi tidak sesuai. Silakan coba lagi.')
+    else onClose()
+  }
+  const reset = async () => {
+    if (!supabase || !email) { setError('Masukkan alamat surel terlebih dahulu.'); return }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {redirectTo: window.location.origin})
+    if (error) setError('Tautan pemulihan belum dapat dikirim.')
+    else { setSent(true); setError('') }
+  }
+  return <motion.div className="overlay" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} onMouseDown={e=>{if(e.target===e.currentTarget)onClose()}}>
+    <motion.form className="dialog login-dialog" onSubmit={submit} initial={{y:24,opacity:0}} animate={{y:0,opacity:1}} exit={{y:16,opacity:0}}>
+      <button type="button" className="dialog-close" onClick={onClose}><X/></button>
+      <div className="eyebrow"><span className="eyebrow-line"/> AREA AKUN</div>
+      <h2>Selamat datang <em>kembali.</em></h2>
+      <p>Masuk untuk mengakses akun dan pengelolaan Aco.Digital.</p>
+      <label>Alamat surel<input type="email" autoComplete="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="nama@contoh.com"/></label>
+      <label>Kata sandi<input type="password" autoComplete="current-password" required value={password} onChange={e=>setPassword(e.target.value)} placeholder="Masukkan kata sandi"/></label>
+      {error && <div className="inline-notice">{error}</div>}
+      {sent && <div className="inline-notice">Tautan pemulihan telah dikirim jika alamat surel terdaftar.</div>}
+      <button className="button button-light full-button" type="submit" disabled={loading}>{loading?'Sedang masuk…':'Masuk ke akun'} <ArrowRight size={16}/></button>
+      <button className="login-reset" type="button" onClick={reset}>Lupa kata sandi?</button>
+    </motion.form>
+  </motion.div>
+}
+
+function OwnerDashboard({email,onSignOut}:{email:string;onSignOut:()=>void}) {
+  const [counts,setCounts] = useState({orders:0,products:0,customers:0,active:0})
+  const [latest,setLatest] = useState<any[]>([])
+  const [loading,setLoading] = useState(true)
+  const [error,setError] = useState('')
+  useEffect(() => {
+    let alive = true
+    const load = async () => {
+      if (!supabase) return
+      const [orders,products,customers,active,recent] = await Promise.all([
+        supabase.from('orders').select('id',{count:'exact',head:true}),
+        supabase.from('products').select('id',{count:'exact',head:true}),
+        supabase.from('profiles').select('id',{count:'exact',head:true}),
+        supabase.from('active_products').select('id',{count:'exact',head:true}),
+        supabase.from('orders').select('id,order_number,total_idr,payment_status,fulfillment_status,created_at').order('created_at',{ascending:false}).limit(6)
+      ])
+      if (!alive) return
+      const failed = [orders,products,customers,active,recent].find(x=>x.error)
+      if (failed?.error) setError('Sebagian data belum dapat dimuat. Periksa konfigurasi akses basis data.')
+      setCounts({orders:orders.count||0,products:products.count||0,customers:customers.count||0,active:active.count||0})
+      setLatest(recent.data||[])
+      setLoading(false)
+    }
+    void load()
+    return () => { alive=false }
+  },[])
+  const idr = (value:number) => new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(value||0)
+  const translateStatus = (value:string) => ({pending:'Menunggu',paid:'Dibayar',failed:'Gagal',refunded:'Dikembalikan',processing:'Diproses',fulfilled:'Selesai',cancelled:'Dibatalkan'}[value] || value || '—')
+  return <div className="admin-shell">
+    <aside className="admin-sidebar"><a className="brand" href="#"><span className="brand-mark">a.</span><span>aco<span className="brand-dot">.</span>digital</span></a><div className="admin-label">PENGELOLAAN TOKO</div><nav><a className="active" href="#ringkasan">Ringkasan</a><a href="#pesanan">Pesanan</a><a href="#produk-admin">Produk & paket</a><a href="#pelanggan">Pelanggan</a><a href="#akses">Produk aktif</a><a href="#keuangan">Keuangan & saldo</a><a href="#voucher">Voucher & promo</a><a href="#pengaturan">Pengaturan</a></nav><div className="admin-account"><span className="owner-avatar">O</span><div><strong>Pemilik</strong><small>{email}</small></div><button onClick={onSignOut}>Keluar</button></div></aside>
+    <main className="admin-main" id="ringkasan"><div className="admin-top"><div><div className="eyebrow"><span className="eyebrow-line"/> RUANG KERJA PEMILIK</div><h1>Ringkasan <em>toko.</em></h1><p>Pantau operasional Aco.Digital dari satu tempat.</p></div><span className="admin-status">AKUN PEMILIK</span></div>
+      {error && <div className="inline-notice">{error}</div>}
+      <div className="admin-stats"><div><span>JUMLAH PESANAN</span><strong>{loading?'—':counts.orders}</strong><small>Seluruh pesanan tercatat</small></div><div><span>PRODUK</span><strong>{loading?'—':counts.products}</strong><small>Produk dalam katalog</small></div><div><span>PELANGGAN</span><strong>{loading?'—':counts.customers}</strong><small>Akun terdaftar</small></div><div><span>PRODUK AKTIF</span><strong>{loading?'—':counts.active}</strong><small>Akses pelanggan berjalan</small></div></div>
+      <section className="admin-panel" id="pesanan"><div className="admin-panel-heading"><div><h2>Pesanan terbaru</h2><p>Aktivitas pesanan yang paling baru masuk.</p></div><span>6 TERBARU</span></div>
+      {loading?<p className="admin-empty">Memuat data…</p>:latest.length===0?<p className="admin-empty">Belum ada pesanan. Pesanan baru akan muncul di sini setelah sistem transaksi diaktifkan.</p>:<div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Nomor pesanan</th><th>Total</th><th>Pembayaran</th><th>Status</th><th>Tanggal</th></tr></thead><tbody>{latest.map(o=><tr key={o.id}><td>{o.order_number||o.id.slice(0,8)}</td><td>{idr(o.total_idr)}</td><td>{translateStatus(o.payment_status)}</td><td>{translateStatus(o.fulfillment_status)}</td><td>{new Date(o.created_at).toLocaleDateString('id-ID')}</td></tr>)}</tbody></table></div>}</section>
+      <div className="admin-notice"><ShieldCheck size={18}/><span>Panel ini hanya dapat diakses oleh akun dengan peran pemilik. Verifikasi pembayaran dan pembuatan pesanan belum diaktifkan.</span></div>
+    </main>
+  </div>
+}
+
 export default App
