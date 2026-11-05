@@ -7,7 +7,7 @@ on:
     branches:
       - main
 permissions:
-  contents: write
+  contents: read
 concurrency:
   group: aco-preview-${{ github.ref }}
   cancel-in-progress: true
@@ -16,31 +16,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref || github.ref_name }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install dependencies
-        run: npm install
-      - name: Report dependency advisories
-        run: |
-          npm audit --json > /tmp/npm-audit.json || true
-          node -e "const a=require('/tmp/npm-audit.json'); console.log('Dependency audit:', JSON.stringify(a.metadata?.vulnerabilities ?? {})); for (const [name,v] of Object.entries(a.vulnerabilities ?? {})) console.log(name, v.severity, 'fix:', JSON.stringify(v.fixAvailable));"
-      - name: Create and commit npm lockfile
-        if: github.event_name == 'push'
-        run: |
-          npm install --package-lock-only
-          git add package-lock.json
-          if git diff --cached --quiet; then
-            echo "Lockfile already current"
-          else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -m "chore: lock npm dependencies"
-            git push origin "HEAD:${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
-          fi
-      - name: Verify reproducible install
+          cache: npm
+      - name: Install locked dependencies
         run: npm ci
-      - name: Production build
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+      - name: Build
         run: npm run build
