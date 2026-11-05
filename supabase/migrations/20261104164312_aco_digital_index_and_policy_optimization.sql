@@ -1,0 +1,31 @@
+-- Cover all foreign keys and cache trusted JWT claims once per statement in RLS predicates.
+create index if not exists active_products_created_by_idx on public.active_products(created_by);
+create index if not exists audit_logs_actor_id_idx on public.audit_logs(actor_id);
+create index if not exists order_items_order_id_idx on public.order_items(order_id);
+create index if not exists order_items_package_id_idx on public.order_items(package_id);
+create index if not exists order_items_product_id_idx on public.order_items(product_id);
+create index if not exists order_status_history_changed_by_idx on public.order_status_history(changed_by);
+create index if not exists order_status_history_order_id_idx on public.order_status_history(order_id);
+create index if not exists payments_order_id_idx on public.payments(order_id);
+create index if not exists payments_reviewed_by_idx on public.payments(reviewed_by);
+create index if not exists product_packages_product_id_idx on public.product_packages(product_id);
+create index if not exists products_category_id_idx on public.products(category_id);
+create index if not exists wallet_transactions_created_by_idx on public.wallet_transactions(created_by);
+
+alter policy "Staff read profiles" on public.profiles using (((select auth.jwt()) -> 'app_metadata' ->> 'role') in ('super_admin','order_admin','finance_admin','product_admin'));
+alter policy "Staff manage categories" on public.categories using (((select auth.jwt()) -> 'app_metadata' ->> 'role') in ('super_admin','product_admin')) with check (((select auth.jwt()) -> 'app_metadata' ->> 'role') in ('super_admin','product_admin'));
+alter policy "Staff manage products" on public.products using (((select auth.jwt()) -> 'app_metadata' ->> 'role') in ('super_admin','product_admin')) with check (((select auth.jwt()) -> 'app_metadata' ->> 'role') in ('super_admin','product_admin'));
+alter policy "Staff manage packages" on public.product_packages using (((select auth.jwt()) -> 'app_metadata' ->> 'role') in ('super_admin','product_admin')) with check (((select auth.jwt()) -> 'app_metadata' ->> 'role') in ('super_admin','product_admin'));
+alter policy "Staff manage vouchers" on public.vouchers using (((select auth.jwt()) -> 'app_metadata' ->> 'role') in ('super_admin','product_admin')) with check (((select auth.jwt()) -> 'app_metadata' ->> 'role') in ('super_admin','product_admin'));
+alter policy "Staff manage banners" on public.banners using (((select auth.jwt()) -> 'app_metadata' ->> 'role') in ('super_admin','product_admin')) with check (((select auth.jwt()) -> 'app_metadata' ->> 'role') in ('super_admin','product_admin'));
+alter policy "Staff manage orders" on public.orders using (((select auth.jwt()) -> 'app_metadata' ->> 'role') in ('super_admin','order_admin','finance_admin')) with check (((select auth.jwt()) -> 'app_metadata' ->> 'role') in ('super_admin','order_admin','finance_admin'));
+alter policy "Staff manage payments" on public.payments using (((select auth.jwt()) -> 'app_metadata' ->> 'role') in ('super_admin','finance_admin')) with check (((select auth.jwt()) -> 'app_metadata' ->> 'role') in ('super_admin','finance_admin'));
+alter policy "Staff manage wallets" on public.wallets using (((select auth.jwt()) -> 'app_metadata' ->> 'role') in ('super_admin','finance_admin')) with check (((select auth.jwt()) -> 'app_metadata' ->> 'role') in ('super_admin','finance_admin'));
+alter policy "Staff manage wallet transactions" on public.wallet_transactions using (((select auth.jwt()) -> 'app_metadata' ->> 'role') in ('super_admin','finance_admin')) with check (((select auth.jwt()) -> 'app_metadata' ->> 'role') in ('super_admin','finance_admin'));
+alter policy "Staff manage active products" on public.active_products using (((select auth.jwt()) -> 'app_metadata' ->> 'role') in ('super_admin','order_admin')) with check (((select auth.jwt()) -> 'app_metadata' ->> 'role') in ('super_admin','order_admin'));
+alter policy "Staff read audit logs" on public.audit_logs using (((select auth.jwt()) -> 'app_metadata' ->> 'role') in ('super_admin'));
+alter policy "Staff insert audit logs" on public.audit_logs with check (((select auth.jwt()) -> 'app_metadata' ->> 'role') in ('super_admin','order_admin','finance_admin','product_admin'));
+alter policy "Staff read order items" on public.order_items using (((select auth.jwt()) -> 'app_metadata' ->> 'role') in ('super_admin','order_admin','finance_admin'));
+alter policy "Staff read order status history" on public.order_status_history using (((select auth.jwt()) -> 'app_metadata' ->> 'role') in ('super_admin','order_admin','finance_admin'));
+alter policy "Staff read wallets" on public.wallets using (((select auth.jwt()) -> 'app_metadata' ->> 'role') in ('super_admin','finance_admin'));
+alter policy "Staff read wallet transactions" on public.wallet_transactions using (((select auth.jwt()) -> 'app_metadata' ->> 'role') in ('super_admin','finance_admin'));
